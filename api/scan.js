@@ -28,16 +28,12 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY niet ingesteld.' });
 
-  // AQ.-sleutels zijn auth keys en vereisen Bearer-authenticatie
-  const geminiHeaders = { 'Content-Type': 'application/json' };
-  const geminiUrl = apiKey.startsWith('AQ.')
-    ? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  if (apiKey.startsWith('AQ.')) geminiHeaders['Authorization'] = `Bearer ${apiKey}`;
-
-  const geminiRes = await fetch(geminiUrl, {
+  // Sleutel via de x-goog-api-key header (werkt voor zowel oude AIza- als nieuwe AQ.-sleutels)
+  const geminiRes = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    {
       method: 'POST',
-      headers: geminiHeaders,
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         contents: [{
           parts: [
