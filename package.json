@@ -1,0 +1,15 @@
+{
+  "name": "speelplein-kassa",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "create-excel": "node create-excel.mjs",
+    "get-token": "node get-token.mjs"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0"
+  }
+}

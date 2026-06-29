@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Speelplein-kassa</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --clr-bg:      #f0f4ff;
+      --clr-card:    #ffffff;
+      --clr-primary: #4f6ef7;
+      --clr-primary-dark: #3a55d4;
+      --clr-danger:  #e53935;
+      --clr-success: #2e7d32;
+      --clr-text:    #1a1a2e;
+      --clr-muted:   #6b7280;
+      --clr-border:  #d1d9ff;
+      --radius:      14px;
+      --shadow:      0 4px 20px rgba(79,110,247,.12);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      min-height: 100dvh;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0 24px;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; color: var(--clr-primary); }
+    header p  { font-size: .85rem; color: var(--clr-muted); margin-top: 4px; }
+
+    .card {
+      background: var(--clr-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Scan zone ── */
+    .scan-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #preview {
+      width: 100%;
+      max-height: 260px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 2px dashed var(--clr-border);
+      display: none;
+    }
+    #preview.visible { display: block; }
+
+    .placeholder {
+      width: 100%;
+      height: 180px;
+      border: 2px dashed var(--clr-border);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--clr-muted);
+      font-size: .9rem;
+    }
+    .placeholder svg { opacity: .4; }
+    .placeholder.hidden { display: none; }
+
+    label.btn-scan {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--clr-primary);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: background .15s;
+      user-select: none;
+    }
+    label.btn-scan:hover { background: var(--clr-primary-dark); }
+    #fileInput { display: none; }
+
+    /* ── Form ── */
+    #formSection { display: none; }
+    #formSection.visible { display: block; }
+
+    .field { margin-bottom: 14px; }
+    label.field-label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 5px;
+    }
+    input[type=text], input[type=date], input[type=number], select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--clr-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      color: var(--clr-text);
+      background: #fff;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus { border-color: var(--clr-primary); }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 14px 24px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity .15s, background .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-save  { background: var(--clr-success); color: #fff; }
+    .btn-reset { background: #e8ecff; color: var(--clr-primary); margin-top: 10px; }
+
+    /* ── Status ── */
+    #status {
+      display: none;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-weight: 600;
+      font-size: .95rem;
+      margin-bottom: 16px;
+    }
+    #status.ok      { background: #e8f5e9; color: var(--clr-success); display: block; }
+    #status.err     { background: #ffebee; color: var(--clr-danger);  display: block; }
+    #status.loading { background: #e8ecff; color: var(--clr-primary); display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center;
+      font-size: .75rem;
+      color: var(--clr-muted);
+      padding: 12px 0 24px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧾 Speelplein-kassa</h1>
+  <p>Scan een kassabon — hij komt automatisch in Excel.</p>
+</header>
+
+<div id="status"></div>
+
+<div class="card">
+  <div class="scan-zone">
+    <div class="placeholder" id="placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 3v6M15 3v6"/>
+      </svg>
+      <span>Nog geen bon geselecteerd</span>
+    </div>
+    <img id="preview" alt="Voorbeeld bon" />
+    <label class="btn-scan" for="fileInput">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      Scan een bonnetje
+    </label>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" />
+  </div>
+</div>
+
+<div class="card" id="formSection">
+  <div class="row-2">
+    <div class="field">
+      <label class="field-label" for="fDatum">Datum</label>
+      <input type="date" id="fDatum" />
+    </div>
+    <div class="field">
+      <label class="field-label" for="fBedrag">Bedrag (€)</label>
+      <input type="number" id="fBedrag" step="0.01" min="0" placeholder="0.00" />
+    </div>
+  </div>
+  <div class="field">
+    <label class="field-label" for="fWinkel">Winkel</label>
+    <input type="text" id="fWinkel" placeholder="Naam van de winkel" />
+  </div>
+  <div class="row-2">
+    <div class="field">
+      <label class="field-label" for="fWeek">Week</label>
+      <select id="fWeek"></select>
+    </div>
+    <div class="field">
+      <label class="field-label" for="fThema">Thema</label>
+      <select id="fThema"></select>
+    </div>
+  </div>
+  <div class="field">
+    <label class="field-label" for="fOmschrijving">Omschrijving</label>
+    <input type="text" id="fOmschrijving" placeholder="Wat werd er gekocht?" />
+  </div>
+
+  <button class="btn btn-save" id="btnSave" onclick="saveReceipt()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+      <polyline points="17 21 17 13 7 13 7 21"/>
+      <polyline points="7 3 7 8 15 8"/>
+    </svg>
+    Bewaar in Excel
+  </button>
+  <button class="btn btn-reset" onclick="reset()">Nieuwe bon scannen</button>
+</div>
+
+<footer>Speelplein-kassa · bonnen gaan naar jouw OneDrive</footer>
+
+<script>
+  // ── Aanpassen indien gewijzigd in api/scan.js ──────────────────────────
+  const WEEK_RANGES_FALLBACK = [
+    'Week 1 (7–11 jul)',
+    'Week 2 (14–18 jul)',
+    'Week 3 (21–25 jul)',
+    'Week 4 (28 jul–1 aug)',
+    'Week 5 (4–8 aug)',
+    'Week 6 (11–15 aug)',
+    'Buiten schema',
+  ];
+  const THEMA_NAMEN_FALLBACK = ['Jungle', 'Ruimte', 'Piraten', 'Middeleeuwen', 'Superhelden'];
+  // ────────────────────────────────────────────────────────────────────────
+
+  let currentImageBase64 = null;
+  let currentMimeType = 'image/jpeg';
+
+  const fileInput   = document.getElementById('fileInput');
+  const preview     = document.getElementById('preview');
+  const placeholder = document.getElementById('placeholder');
+  const formSection = document.getElementById('formSection');
+  const statusEl    = document.getElementById('status');
+  const btnSave     = document.getElementById('btnSave');
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    // Toon preview
+    const url = URL.createObjectURL(file);
+    preview.src = url;
+    preview.classList.add('visible');
+    placeholder.classList.add('hidden');
+
+    // Lees als base64
+    currentMimeType = file.type || 'image/jpeg';
+    currentImageBase64 = await toBase64(file);
+
+    showStatus('loading', 'Bon wordt uitgelezen…');
+    formSection.classList.remove('visible');
+
+    try {
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: currentImageBase64, mimeType: currentMimeType }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showStatus('err', data.error ?? 'Fout bij uitlezen.');
+        return;
+      }
+
+      // Vul formulier
+      populateSelects(data.weekRanges ?? WEEK_RANGES_FALLBACK, data.themas ?? THEMA_NAMEN_FALLBACK);
+      document.getElementById('fDatum').value       = data.datum ?? '';
+      document.getElementById('fBedrag').value      = data.bedrag ?? '';
+      document.getElementById('fWinkel').value      = data.winkel ?? '';
+      document.getElementById('fOmschrijving').value = data.omschrijving ?? '';
+      setSelectValue('fWeek',  data.week);
+      setSelectValue('fThema', '');  // gebruiker kiest zelf het thema
+
+      hideStatus();
+      formSection.classList.add('visible');
+    } catch (e) {
+      showStatus('err', 'Netwerkfout: ' + e.message);
+    }
+  });
+
+  function populateSelects(weeks, themas) {
+    const wSel = document.getElementById('fWeek');
+    const tSel = document.getElementById('fThema');
+    wSel.innerHTML = weeks.map(w => `<option>${w}</option>`).join('');
+    tSel.innerHTML = themas.map(t => `<option>${t}</option>`).join('');
+  }
+
+  function setSelectValue(id, val) {
+    const sel = document.getElementById(id);
+    const opt = [...sel.options].find(o => o.value === val);
+    if (opt) sel.value = val;
+  }
+
+  async function saveReceipt() {
+    const datum        = document.getElementById('fDatum').value;
+    const bedragStr    = document.getElementById('fBedrag').value;
+    const winkel       = document.getElementById('fWinkel').value;
+    const omschrijving = document.getElementById('fOmschrijving').value;
+    const week         = document.getElementById('fWeek').value;
+    const thema        = document.getElementById('fThema').value;
+
+    if (!datum || !bedragStr) {
+      showStatus('err', 'Vul minstens datum en bedrag in.');
+      return;
+    }
+
+    btnSave.disabled = true;
+    showStatus('loading', 'Opslaan in Excel…');
+
+    try {
+      const res = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          datum, week, thema, winkel,
+          bedrag: parseFloat(bedragStr),
+          omschrijving,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showStatus('err', data.error ?? 'Opslaan mislukt.');
+        btnSave.disabled = false;
+        return;
+      }
+
+      showStatus('ok', '✓ Bon opgeslagen in Excel!');
+      formSection.classList.remove('visible');
+    } catch (e) {
+      showStatus('err', 'Netwerkfout: ' + e.message);
+      btnSave.disabled = false;
+    }
+  }
+
+  function reset() {
+    fileInput.value = '';
+    preview.src = '';
+    preview.classList.remove('visible');
+    placeholder.classList.remove('hidden');
+    formSection.classList.remove('visible');
+    hideStatus();
+    btnSave.disabled = false;
+    currentImageBase64 = null;
+  }
+
+  function showStatus(type, msg) {
+    statusEl.className = type;
+    statusEl.innerHTML = type === 'loading'
+      ? `<span class="spinner"></span>${msg}`
+      : msg;
+  }
+  function hideStatus() {
+    statusEl.className = '';
+    statusEl.style.display = 'none';
+  }
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result.split(',')[1]);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+</script>
+</body>
+</html>
