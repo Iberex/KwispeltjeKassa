@@ -1,409 +1,182 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Speelplein-kassa</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --clr-bg:      #f0f4ff;
-      --clr-card:    #ffffff;
-      --clr-primary: #4f6ef7;
-      --clr-primary-dark: #3a55d4;
-      --clr-danger:  #e53935;
-      --clr-success: #2e7d32;
-      --clr-text:    #1a1a2e;
-      --clr-muted:   #6b7280;
-      --clr-border:  #d1d9ff;
-      --radius:      14px;
-      --shadow:      0 4px 20px rgba(79,110,247,.12);
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--clr-bg);
-      color: var(--clr-text);
-      min-height: 100dvh;
-      padding: 16px;
-    }
-
-    header {
-      text-align: center;
-      padding: 20px 0 24px;
-    }
-    header h1 { font-size: 1.6rem; font-weight: 700; color: var(--clr-primary); }
-    header p  { font-size: .85rem; color: var(--clr-muted); margin-top: 4px; }
-
-    .card {
-      background: var(--clr-card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    /* ── Scan zone ── */
-    .scan-zone {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #preview {
-      width: 100%;
-      max-height: 260px;
-      object-fit: contain;
-      border-radius: 10px;
-      border: 2px dashed var(--clr-border);
-      display: none;
-    }
-    #preview.visible { display: block; }
-
-    .placeholder {
-      width: 100%;
-      height: 180px;
-      border: 2px dashed var(--clr-border);
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: var(--clr-muted);
-      font-size: .9rem;
-    }
-    .placeholder svg { opacity: .4; }
-    .placeholder.hidden { display: none; }
-
-    label.btn-scan {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--clr-primary);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 14px 28px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: background .15s;
-      user-select: none;
-    }
-    label.btn-scan:hover { background: var(--clr-primary-dark); }
-    #fileInput { display: none; }
-
-    /* ── Form ── */
-    #formSection { display: none; }
-    #formSection.visible { display: block; }
-
-    .field { margin-bottom: 14px; }
-    label.field-label {
-      display: block;
-      font-size: .8rem;
-      font-weight: 600;
-      color: var(--clr-muted);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      margin-bottom: 5px;
-    }
-    input[type=text], input[type=date], input[type=number], select {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--clr-border);
-      border-radius: 8px;
-      font-size: 1rem;
-      color: var(--clr-text);
-      background: #fff;
-      outline: none;
-      transition: border-color .15s;
-    }
-    input:focus, select:focus { border-color: var(--clr-primary); }
-
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* ── Buttons ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 14px 24px;
-      border-radius: 50px;
-      border: none;
-      cursor: pointer;
-      width: 100%;
-      transition: opacity .15s, background .15s;
-    }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-save  { background: var(--clr-success); color: #fff; }
-    .btn-reset { background: #e8ecff; color: var(--clr-primary); margin-top: 10px; }
-
-    /* ── Status ── */
-    #status {
-      display: none;
-      border-radius: var(--radius);
-      padding: 14px 18px;
-      font-weight: 600;
-      font-size: .95rem;
-      margin-bottom: 16px;
-    }
-    #status.ok      { background: #e8f5e9; color: var(--clr-success); display: block; }
-    #status.err     { background: #ffebee; color: var(--clr-danger);  display: block; }
-    #status.loading { background: #e8ecff; color: var(--clr-primary); display: block; }
-
-    .spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2px solid currentColor;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    footer {
-      text-align: center;
-      font-size: .75rem;
-      color: var(--clr-muted);
-      padding: 12px 0 24px;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Speelplein-kassa</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+  :root{--inkt:#2A2620;--papier:#FAF6EE;--rand:#EDE6D7;--zacht:#6F685C;--groen:#2F8F5B;--groenD:#256E47;--amber:#F5B23D;--coral:#E76A53}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--papier);color:var(--inkt);font-family:'Baloo 2',ui-rounded,'Segoe UI',system-ui,sans-serif}
+  .wrap{max-width:480px;margin:0 auto;padding:0 16px 40px}
+  .num{font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+  header{padding:22px 2px 14px;display:flex;align-items:center;gap:11px}
+  .logo{width:42px;height:42px;border-radius:13px;background:var(--amber);display:grid;place-items:center;box-shadow:0 3px 0 #d99a26;color:#fff;font-size:22px}
+  h1{font-size:21px;margin:0;line-height:1}
+  .sub{font-size:13px;color:var(--zacht);font-weight:600}
+  .scanbtn{width:100%;border:3px dashed var(--groen);background:#fff;border-radius:22px;padding:38px 20px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--inkt)}
+  .scancirc{width:70px;height:70px;border-radius:20px;background:var(--groen);display:grid;place-items:center;box-shadow:0 4px 0 var(--groenD);color:#fff;font-size:32px}
+  .btn{border:none;border-radius:14px;font-weight:700;font-size:16px;padding:14px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;font-family:inherit}
+  .btn-primary{background:var(--groen);color:#fff;box-shadow:0 3px 0 var(--groenD)}
+  .btn-primary:disabled{opacity:.55}
+  .btn-ghost{background:#fff;color:var(--inkt);border:2px solid var(--rand)}
+  .card{background:#fff;border:2px solid var(--rand);border-radius:18px;padding:16px}
+  .melding{display:flex;gap:9px;align-items:flex-start;border-radius:13px;padding:11px 14px;font-weight:600;font-size:13.5px;margin-bottom:14px}
+  .ok{background:#EEF8F1;border:2px solid var(--groen);color:var(--groenD)}
+  .warn{background:#FFF4EC;border:2px solid var(--coral);color:var(--coral)}
+  .rij{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--rand)}
+  .rij .oms{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rij .bedr{font-weight:600;font-size:14px;flex-shrink:0}
+  select.thema{appearance:none;border:none;border-radius:999px;padding:4px 9px;font-family:inherit;font-weight:700;font-size:12px;color:#fff;cursor:pointer;flex-shrink:0}
+  label{font-weight:700;font-size:13px;color:var(--zacht)}
+  input[type=number],select.veld{appearance:none;width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--rand);background:#fff;font-size:15px;font-weight:600;color:var(--inkt);font-family:inherit}
+  .spin{width:40px;height:40px;border:4px solid var(--rand);border-top-color:var(--groen);border-radius:50%;animation:s 1s linear infinite;margin:0 auto}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .hide{display:none}
+  .center{text-align:center}
+</style>
 </head>
 <body>
+<div class="wrap">
+  <header>
+    <div class="logo">☀️</div>
+    <div><h1>Speelplein-kassa</h1><div class="sub">Scan je bon, alles komt in de Excel</div></div>
+  </header>
 
-<header>
-  <h1>🧾 Speelplein-kassa</h1>
-  <p>Scan een kassabon — hij komt automatisch in Excel.</p>
-</header>
+  <div id="melding"></div>
 
-<div id="status"></div>
+  <!-- start -->
+  <div id="start">
+    <button class="scanbtn" onclick="document.getElementById('file').click()">
+      <div class="scancirc">📷</div>
+      <div style="font-weight:800;font-size:19px">Scan een bonnetje</div>
+      <div class="sub center">Neem een foto van de kassabon.<br>De AI leest alles uit en kiest week en thema's.</div>
+    </button>
+    <input id="file" type="file" accept="image/*" capture="environment" class="hide" />
+  </div>
 
-<div class="card">
-  <div class="scan-zone">
-    <div class="placeholder" id="placeholder">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <path d="M3 9h18M9 3v6M15 3v6"/>
-      </svg>
-      <span>Nog geen bon geselecteerd</span>
+  <!-- bezig -->
+  <div id="bezig" class="hide card center" style="padding:46px 20px">
+    <div class="spin"></div>
+    <div style="font-weight:800;font-size:18px;margin-top:14px">De bon wordt uitgelezen…</div>
+    <div class="sub" style="margin-top:4px">Even geduld, dit duurt een paar tellen.</div>
+  </div>
+
+  <!-- controle -->
+  <div id="controle" class="hide">
+    <div id="leesmelding" class="melding"></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <div id="cWinkel" style="font-weight:800;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        <div id="cDatum" class="num sub"></div>
+      </div>
+      <div class="sub" style="margin:10px 0 6px">Wat de AI las — tik op een thema om te wijzigen</div>
+      <div id="cItems"></div>
     </div>
-    <img id="preview" alt="Voorbeeld bon" />
-    <label class="btn-scan" for="fileInput">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>
-      Scan een bonnetje
-    </label>
-    <input type="file" id="fileInput" accept="image/*" capture="environment" />
+    <div style="display:flex;gap:12px;margin-top:16px">
+      <div style="flex:1">
+        <label>Totaalbedrag</label>
+        <div style="position:relative;margin-top:6px">
+          <span class="num" style="position:absolute;left:14px;top:13px;font-weight:700;color:var(--zacht)">€</span>
+          <input id="cTotaal" type="number" step="0.01" inputmode="decimal" class="num" style="padding-left:30px;font-size:18px;font-weight:700" />
+        </div>
+      </div>
+      <div style="flex:1">
+        <label>Week</label>
+        <select id="cWeek" class="veld" style="margin-top:6px"></select>
+        <div class="sub" id="cWeekHint" style="font-size:11.5px;margin-top:4px"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-ghost" style="width:auto;padding:14px 16px" onclick="reset()">↺ Opnieuw</button>
+      <button id="bewaar" class="btn btn-primary" onclick="bewaar()">✓ Bewaar in Excel</button>
+    </div>
+  </div>
+
+  <!-- klaar -->
+  <div id="klaar" class="hide card center" style="padding:40px 20px">
+    <div style="font-size:42px" id="klaarIcon">✅</div>
+    <div id="klaarTekst" style="font-weight:800;font-size:19px;margin:8px 0 18px"></div>
+    <button class="btn btn-primary" onclick="reset()">Volgende bon scannen</button>
   </div>
 </div>
-
-<div class="card" id="formSection">
-  <div class="row-2">
-    <div class="field">
-      <label class="field-label" for="fDatum">Datum</label>
-      <input type="date" id="fDatum" />
-    </div>
-    <div class="field">
-      <label class="field-label" for="fBedrag">Bedrag (€)</label>
-      <input type="number" id="fBedrag" step="0.01" min="0" placeholder="0.00" />
-    </div>
-  </div>
-  <div class="field">
-    <label class="field-label" for="fWinkel">Winkel</label>
-    <input type="text" id="fWinkel" placeholder="Naam van de winkel" />
-  </div>
-  <div class="row-2">
-    <div class="field">
-      <label class="field-label" for="fWeek">Week</label>
-      <select id="fWeek"></select>
-    </div>
-    <div class="field">
-      <label class="field-label" for="fThema">Thema</label>
-      <select id="fThema"></select>
-    </div>
-  </div>
-  <div class="field">
-    <label class="field-label" for="fOmschrijving">Omschrijving</label>
-    <input type="text" id="fOmschrijving" placeholder="Wat werd er gekocht?" />
-  </div>
-
-  <button class="btn btn-save" id="btnSave" onclick="saveReceipt()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-      <polyline points="17 21 17 13 7 13 7 21"/>
-      <polyline points="7 3 7 8 15 8"/>
-    </svg>
-    Bewaar in Excel
-  </button>
-  <button class="btn btn-reset" onclick="reset()">Nieuwe bon scannen</button>
-</div>
-
-<footer>Speelplein-kassa · bonnen gaan naar jouw OneDrive</footer>
 
 <script>
-  // ── Aanpassen indien gewijzigd in api/scan.js ──────────────────────────
-  const WEEK_RANGES_FALLBACK = [
-    'Week 1 (7–11 jul)',
-    'Week 2 (14–18 jul)',
-    'Week 3 (21–25 jul)',
-    'Week 4 (28 jul–1 aug)',
-    'Week 5 (4–8 aug)',
-    'Week 6 (11–15 aug)',
-    'Buiten schema',
-  ];
-  const THEMA_NAMEN_FALLBACK = ['Jungle', 'Ruimte', 'Piraten', 'Middeleeuwen', 'Superhelden'];
-  // ────────────────────────────────────────────────────────────────────────
+const THEMAS={Voedsel:'#E76A53',Drank:'#3D9BD1',Alcohol:'#8E5BB5',Spelmateriaal:'#2F8F5B',Knutselgerief:'#F5B23D',Kuisproducten:'#17A2A2',Varia:'#8A8276'};
+const EMOJI={Voedsel:'🍞',Drank:'🥤',Alcohol:'🍺',Spelmateriaal:'⚽',Knutselgerief:'✂️',Kuisproducten:'🧽',Varia:'📦'};
+const THEMA_NAMEN=Object.keys(THEMAS);
+const WEKEN=["Opbouw","Week 1","Week 2","Week 3","Week 4","Week 5","Week 6","Week 7","Afbraak"];
+let bon=null;
 
-  let currentImageBase64 = null;
-  let currentMimeType = 'image/jpeg';
+function toon(id){['start','bezig','controle','klaar'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));}
+function melding(t,soort){const m=document.getElementById('melding');m.innerHTML=t?`<div class="melding ${soort||'warn'}">${t}</div>`:'';}
+const euro=n=>(Number(n)||0).toLocaleString('nl-BE',{style:'currency',currency:'EUR'});
 
-  const fileInput   = document.getElementById('fileInput');
-  const preview     = document.getElementById('preview');
-  const placeholder = document.getElementById('placeholder');
-  const formSection = document.getElementById('formSection');
-  const statusEl    = document.getElementById('status');
-  const btnSave     = document.getElementById('btnSave');
+document.getElementById('file').addEventListener('change',async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f)return;
+  melding(''); toon('bezig');
+  try{
+    const {base64,mime}=await verklein(f);
+    const r=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'extract',image:base64,mimeType:mime})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.fout||'Uitlezen mislukt.');
+    bon=d; toonControle(d);
+  }catch(err){melding(err.message,'warn');toon('start');}
+});
 
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
-    if (!file) return;
+function verklein(file){return new Promise((res,rej)=>{
+  const rd=new FileReader();
+  rd.onload=()=>{const img=new Image();img.onload=()=>{
+    const max=1600;let{width:w,height:h}=img;
+    if(w>max||h>max){const s=Math.min(max/w,max/h);w=Math.round(w*s);h=Math.round(h*s);}
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    const u=c.toDataURL('image/jpeg',0.82);res({base64:u.split(',')[1],mime:'image/jpeg'});
+  };img.onerror=rej;img.src=rd.result;};
+  rd.onerror=rej;rd.readAsDataURL(file);
+});}
 
-    // Toon preview
-    const url = URL.createObjectURL(file);
-    preview.src = url;
-    preview.classList.add('visible');
-    placeholder.classList.add('hidden');
-
-    // Lees als base64
-    currentMimeType = file.type || 'image/jpeg';
-    currentImageBase64 = await toBase64(file);
-
-    showStatus('loading', 'Bon wordt uitgelezen…');
-    formSection.classList.remove('visible');
-
-    try {
-      const res = await fetch('/api/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: currentImageBase64, mimeType: currentMimeType }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showStatus('err', data.error ?? 'Fout bij uitlezen.');
-        return;
-      }
-
-      // Vul formulier
-      populateSelects(data.weekRanges ?? WEEK_RANGES_FALLBACK, data.themas ?? THEMA_NAMEN_FALLBACK);
-      document.getElementById('fDatum').value       = data.datum ?? '';
-      document.getElementById('fBedrag').value      = data.bedrag ?? '';
-      document.getElementById('fWinkel').value      = data.winkel ?? '';
-      document.getElementById('fOmschrijving').value = data.omschrijving ?? '';
-      setSelectValue('fWeek',  data.week);
-      setSelectValue('fThema', '');  // gebruiker kiest zelf het thema
-
-      hideStatus();
-      formSection.classList.add('visible');
-    } catch (e) {
-      showStatus('err', 'Netwerkfout: ' + e.message);
-    }
+function toonControle(d){
+  const lm=document.getElementById('leesmelding');
+  const onlees=!d.leesbaar;
+  lm.className='melding '+(onlees?'warn':'ok');
+  lm.textContent=(onlees?'De foto is niet helemaal duidelijk. Controleer de bedragen en thema\'s of scan opnieuw.':'Duidelijk leesbaar. Kijk de thema\'s even na en bewaar.')+(d.opmerking?' — '+d.opmerking:'');
+  if(d.dubbel)melding('Let op: een bon van deze winkel, datum en bedrag staat mogelijk al in de Excel.','warn');
+  document.getElementById('cWinkel').textContent=d.winkel;
+  document.getElementById('cDatum').textContent=d.datum;
+  document.getElementById('cTotaal').value=d.totaal;
+  const ws=document.getElementById('cWeek');ws.innerHTML=WEKEN.map(w=>`<option ${w===d.week?'selected':''}>${w}</option>`).join('');
+  document.getElementById('cWeekHint').textContent='Automatisch uit '+d.datum;
+  const wrap=document.getElementById('cItems');wrap.innerHTML='';
+  if(!d.items.length)wrap.innerHTML='<div class="sub" style="padding:4px 0">Geen losse lijnen herkend — alles komt onder Varia.</div>';
+  d.items.forEach((it,i)=>{
+    const row=document.createElement('div');row.className='rij';
+    const sel=document.createElement('select');sel.className='thema';sel.style.background=THEMAS[it.thema];
+    sel.innerHTML=THEMA_NAMEN.map(t=>`<option value="${t}" ${t===it.thema?'selected':''} style="color:#000;background:#fff">${EMOJI[t]} ${t}</option>`).join('');
+    sel.onchange=()=>{it.thema=sel.value;sel.style.background=THEMAS[sel.value];};
+    const oms=document.createElement('span');oms.className='oms';oms.textContent=it.omschrijving;
+    const bedr=document.createElement('span');bedr.className='num bedr';bedr.textContent=euro(it.bedrag);
+    row.append(sel,oms,bedr);wrap.append(row);
   });
+  toon('controle');
+}
 
-  function populateSelects(weeks, themas) {
-    const wSel = document.getElementById('fWeek');
-    const tSel = document.getElementById('fThema');
-    wSel.innerHTML = weeks.map(w => `<option>${w}</option>`).join('');
-    tSel.innerHTML = themas.map(t => `<option>${t}</option>`).join('');
-  }
-
-  function setSelectValue(id, val) {
-    const sel = document.getElementById(id);
-    const opt = [...sel.options].find(o => o.value === val);
-    if (opt) sel.value = val;
-  }
-
-  async function saveReceipt() {
-    const datum        = document.getElementById('fDatum').value;
-    const bedragStr    = document.getElementById('fBedrag').value;
-    const winkel       = document.getElementById('fWinkel').value;
-    const omschrijving = document.getElementById('fOmschrijving').value;
-    const week         = document.getElementById('fWeek').value;
-    const thema        = document.getElementById('fThema').value;
-
-    if (!datum || !bedragStr) {
-      showStatus('err', 'Vul minstens datum en bedrag in.');
-      return;
-    }
-
-    btnSave.disabled = true;
-    showStatus('loading', 'Opslaan in Excel…');
-
-    try {
-      const res = await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          datum, week, thema, winkel,
-          bedrag: parseFloat(bedragStr),
-          omschrijving,
-        }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        showStatus('err', data.error ?? 'Opslaan mislukt.');
-        btnSave.disabled = false;
-        return;
-      }
-
-      showStatus('ok', '✓ Bon opgeslagen in Excel!');
-      formSection.classList.remove('visible');
-    } catch (e) {
-      showStatus('err', 'Netwerkfout: ' + e.message);
-      btnSave.disabled = false;
-    }
-  }
-
-  function reset() {
-    fileInput.value = '';
-    preview.src = '';
-    preview.classList.remove('visible');
-    placeholder.classList.remove('hidden');
-    formSection.classList.remove('visible');
-    hideStatus();
-    btnSave.disabled = false;
-    currentImageBase64 = null;
-  }
-
-  function showStatus(type, msg) {
-    statusEl.className = type;
-    statusEl.innerHTML = type === 'loading'
-      ? `<span class="spinner"></span>${msg}`
-      : msg;
-  }
-  function hideStatus() {
-    statusEl.className = '';
-    statusEl.style.display = 'none';
-  }
-
-  function toBase64(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result.split(',')[1]);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
+async function bewaar(){
+  const btn=document.getElementById('bewaar');btn.disabled=true;btn.textContent='Bezig…';
+  try{
+    const r=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save',winkel:bon.winkel,datum:bon.datum,
+        week:document.getElementById('cWeek').value,totaal:document.getElementById('cTotaal').value,items:bon.items})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.fout||'Opslaan mislukt.');
+    const ic=document.getElementById('klaarIcon'),tk=document.getElementById('klaarTekst');
+    if(d.status==='dubbel'){ic.textContent='🔁';tk.textContent='Deze bon stond al in de Excel — niet dubbel toegevoegd.';}
+    else{ic.textContent='✅';tk.textContent='Bewaard in de Excel!';}
+    melding('');toon('klaar');
+  }catch(err){melding(err.message,'warn');btn.disabled=false;btn.textContent='✓ Bewaar in Excel';}
+}
+function reset(){bon=null;melding('');toon('start');}
 </script>
 </body>
 </html>
