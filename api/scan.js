@@ -25,21 +25,11 @@ export default async function handler(req, res) {
   const { imageBase64, mimeType = 'image/jpeg' } = req.body ?? {};
   if (!imageBase64) return res.status(400).json({ error: 'Geen afbeelding meegestuurd.' });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY niet ingesteld.' });
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'GROQ_API_KEY niet ingesteld.' });
 
-  // Sleutel via de x-goog-api-key header (werkt voor zowel oude AIza- als nieuwe AQ.-sleutels)
-  const geminiRes = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            {
-              text: `Je bent een kassabon-scanner. Analyseer deze kassabon zorgvuldig.
-Geef de volgende informatie terug als pure JSON (geen markdown, geen uitleg):
+  const prompt = `Je bent een kassabon-scanner. Analyseer deze kassabon zorgvuldig.
+Geef UITSLUITEND pure JSON terug (geen markdown, geen uitleg):
 {
   "datum": "YYYY-MM-DD",
   "winkel": "naam van de winkel",
@@ -48,25 +38,35 @@ Geef de volgende informatie terug als pure JSON (geen markdown, geen uitleg):
 }
 Als datum niet leesbaar is, gebruik vandaag: ${new Date().toISOString().slice(0, 10)}.
 Als bedrag niet leesbaar is, gebruik null.
-Gebruik altijd het TOTAALBEDRAG (inclusief btw).`,
-            },
-            {
-              inline_data: { mime_type: mimeType, data: imageBase64 },
-            },
-          ],
-        }],
-        generationConfig: { temperature: 0, maxOutputTokens: 300 },
-      }),
+Gebruik altijd het TOTAALBEDRAG (inclusief btw).`;
+
+  const geminiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
     },
-  );
+    body: JSON.stringify({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      temperature: 0,
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+        ],
+      }],
+    }),
+  });
 
   if (!geminiRes.ok) {
     const err = await geminiRes.text();
-    return res.status(502).json({ error: 'Gemini-fout: ' + err.slice(0, 200) });
+    return res.status(502).json({ error: 'AI-fout: ' + err.slice(0, 200) });
   }
 
   const geminiData = await geminiRes.json();
-  const raw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const raw = geminiData.choices?.[0]?.message?.content ?? '';
 
   let extracted;
   try {
